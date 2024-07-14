@@ -3,7 +3,7 @@ import unittest
 from textnode import TextNode, text_node_to_html_node, text_type_text, text_type_bold, text_type_italic, text_type_code, text_type_link, text_type_image
 from htmlnode import HTMLNode, LeafNode, ParentNode
 
-from splitnodes import split_nodes_delimiter
+from splitnodes import split_nodes_delimiter, extract_markdown_images, extract_markdown_links
 
 class TestTextNode(unittest.TestCase):
     def test_eq(self):
@@ -131,10 +131,26 @@ class TestSplitNodes(unittest.TestCase):
                 new_nodes,
             )
 
+    def test_extract_markdown_images(self):
+        text = "This is text with a ![rick roll](https://i.imgur.com/aKaOqIh.gif) and ![obi wan](https://i.imgur.com/fJRm4Vk.jpeg)"
+        extracted_text = extract_markdown_images(text)
+        self.assertListEqual(
+                [
+                ("rick roll", "https://i.imgur.com/aKaOqIh.gif"),
+                ("obi wan", "https://i.imgur.com/fJRm4Vk.jpeg")
+                ],
+                extracted_text,
+            )
 
-
-
-
+    def test_extract_markdown_links(self):
+        text = "This is text with a link [to boot dev](https://www.boot.dev) and [to youtube](https://www.youtube.com/@bootdotdev)"
+        extracted_text = extract_markdown_links(text)
+        self.assertListEqual(
+                [
+                ("to boot dev", "https://www.boot.dev"), ("to youtube", "https://www.youtube.com/@bootdotdev")
+                ],
+                extracted_text,
+            )
 
 
 
