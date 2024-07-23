@@ -7,7 +7,7 @@ def split_nodes_delimiter(old_nodes, delimiter, text_type):
         if node.text_type == "text" and delimiter in node.text:
             parts = node.text.split(delimiter)
             if len(parts) % 2 == 0:
-                raise Exception("Invalid Markdown Syntax (No closing delimiter)")
+                raise Exception(f"Invalid Markdown Syntax (No closing delimiter for {delimiter})")
             for i, part in enumerate(parts):
                 if i % 2 == 0:
                     #Even index, outside the delimiter
@@ -35,10 +35,14 @@ def extract_markdown_links(text):
 def split_nodes_link(old_nodes):
     new_nodes = []
     for node in old_nodes:
+        if node.text_type == "image":
+            new_nodes.append(node)
+            continue
+
         extracted = extract_markdown_links(node.text)
         if extracted == []:
             new_nodes.append(TextNode(node.text, node.text_type))
-            return new_nodes
+#            return new_nodes
         else:
             remaining_text = node.text
             for i, link in enumerate(extracted):
@@ -67,13 +71,17 @@ def split_nodes_link(old_nodes):
 def split_nodes_image(old_nodes):
     new_nodes = []
     for node in old_nodes:
+        if node.text_type == "link":
+            new_nodes.append(node)
+            continue
+
         extracted = extract_markdown_images(node.text)
         if extracted == []:
             new_nodes.append(TextNode(node.text, node.text_type))
-            return new_nodes
+#            return new_nodes
         else:
             remaining_text = node.text
-            for i, link in enumerate(extracted):
+            for i, (alt_text, url) in enumerate(extracted):
                 parts = remaining_text.split(f"![{extracted[i][0]}]({extracted[i][1]})", 1)
 
 #                print(f"\n{i}, parts = {parts}")
@@ -82,9 +90,11 @@ def split_nodes_image(old_nodes):
 
                 if parts[0] == "":
                     new_nodes.append(TextNode(extracted[i][0], "image", extracted[i][1]))
+#                    print(f"Creating image node with: ({extracted[i][0]}, 'image', {extracted[i][1]})")
                 else:
                     new_nodes.append(TextNode(parts[0], "text"))
                     new_nodes.append(TextNode(extracted[i][0], "image", extracted[i][1]))
+#                    print(f"Creating image node with: ({extracted[i][0]}, 'image', {extracted[i][1]})")
 
 #                print(f"current_node = {new_nodes}")
                 if i == (len(extracted) - 1) and parts[1] != "":
@@ -93,3 +103,17 @@ def split_nodes_image(old_nodes):
                     remaining_text = parts[1]
 #    print(f"new_nodes = {new_nodes}")
     return new_nodes
+
+def text_to_textnodes(text):
+    new_nodes = []
+    new_nodes1 = split_nodes_delimiter(text, "**", text_type_bold)
+    new_nodes2 = split_nodes_delimiter(new_nodes1, "*", text_type_italic)
+    new_nodes3 = split_nodes_delimiter(new_nodes2, "'", text_type_code)
+    new_nodes4 = split_nodes_image(new_nodes3)
+    new_nodes5 = split_nodes_link(new_nodes4)
+#    print(f"1: {new_nodes1}")
+#    print(f"2: {new_nodes2}")
+#    print(f"3: {new_nodes3}")
+#    print(f"4: {new_nodes4}")
+#    print(f"5: {new_nodes5}")
+    return new_nodes5

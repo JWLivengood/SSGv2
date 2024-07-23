@@ -3,7 +3,7 @@ import unittest
 from textnode import TextNode, text_node_to_html_node, text_type_text, text_type_bold, text_type_italic, text_type_code, text_type_link, text_type_image
 from htmlnode import HTMLNode, LeafNode, ParentNode
 
-from splitnodes import split_nodes_delimiter, extract_markdown_images, extract_markdown_links, split_nodes_link, split_nodes_image
+from splitnodes import split_nodes_delimiter, extract_markdown_images, extract_markdown_links, split_nodes_link, split_nodes_image, text_to_textnodes
 
 class TestTextNode(unittest.TestCase):
     def test_eq(self):
@@ -214,6 +214,24 @@ class TestSplitNodes(unittest.TestCase):
                 new_node
             )
 
+    def test_text_to_textnodes(self):
+        node = TextNode("This is **text** with an *italic* word and a 'code block' and an ![obi wan image](https://i.imgur.com/fJRm4Vk.jpeg) and a [link](https://boot.dev)", text_type_text)
+        textnoded = text_to_textnodes([node])
+        self.assertListEqual(
+                [
+                    TextNode("This is ", text_type_text),
+                    TextNode("text", text_type_bold),
+                    TextNode(" with an ", text_type_text),
+                    TextNode("italic", text_type_italic),
+                    TextNode(" word and a ", text_type_text),
+                    TextNode("code block", text_type_code),
+                    TextNode(" and an ", text_type_text),
+                    TextNode("obi wan image", text_type_image, "https://i.imgur.com/fJRm4Vk.jpeg"),
+                    TextNode(" and a ", text_type_text),
+                    TextNode("link", text_type_link, "https://boot.dev"),
+                ],
+                textnoded
+            )
 
 
 
