@@ -3,7 +3,7 @@ import unittest
 from textnode import TextNode, text_node_to_html_node, text_type_text, text_type_bold, text_type_italic, text_type_code, text_type_link, text_type_image
 from htmlnode import HTMLNode, LeafNode, ParentNode
 
-from splitnodes import split_nodes_delimiter, extract_markdown_images, extract_markdown_links
+from splitnodes import split_nodes_delimiter, extract_markdown_images, extract_markdown_links, split_nodes_link, split_nodes_image
 
 class TestTextNode(unittest.TestCase):
     def test_eq(self):
@@ -151,6 +151,69 @@ class TestSplitNodes(unittest.TestCase):
                 ],
                 extracted_text,
             )
+
+
+
+
+
+    def test_split_nodes_link(self):
+        node = TextNode("This is text with a link [to boot dev](https://www.boot.dev) and [to youtube](https://www.youtube.com)", text_type_text)
+        new_nodes = split_nodes_link([node])
+        self.assertListEqual(
+                [TextNode("This is text with a link ", text_type_text),
+                TextNode("to boot dev", text_type_link, "https://www.boot.dev"),
+                TextNode(" and ", text_type_text),
+                TextNode("to youtube", text_type_link, "https://www.youtube.com")
+                ],
+                new_nodes
+            )
+
+        node2 = TextNode("[This right here](https://www.youtube.com) is a link to Youtube. Meanwhile, [this link](https://www.google.com) will take you to Google.", text_type_text)
+        new_nodes2 = split_nodes_link([node2])
+        self.assertListEqual(
+                [TextNode("This right here", text_type_link, "https://www.youtube.com"),
+                TextNode(" is a link to Youtube. Meanwhile, ", text_type_text),
+                TextNode("this link", text_type_link, "https://www.google.com"),
+                TextNode(" will take you to Google.", text_type_text)
+                ],
+                new_nodes2
+            )
+
+        node3 = TextNode("I have no link", text_type_text)
+        new_node3 = split_nodes_link([node3])
+        self.assertEqual(
+                [TextNode("I have no link", text_type_text)], new_node3)
+
+
+
+        node_list = [node, node2, node3]
+        multi_node = split_nodes_link(node_list)
+        self.assertListEqual(
+                [TextNode("This is text with a link ", text_type_text),
+                TextNode("to boot dev", text_type_link, "https://www.boot.dev"),
+                TextNode(" and ", text_type_text),
+                TextNode("to youtube", text_type_link, "https://www.youtube.com"),
+                TextNode("This right here", text_type_link, "https://www.youtube.com"),
+                TextNode(" is a link to Youtube. Meanwhile, ", text_type_text),
+                TextNode("this link", text_type_link, "https://www.google.com"),
+                TextNode(" will take you to Google.", text_type_text),
+                TextNode("I have no link", text_type_text)
+                ],
+                multi_node
+            )
+
+    def test_split_nodes_image(self):
+        node = TextNode("This is text with a ![rick roll](https://i.imgur.com/aKa0qIh.gif) and ![obi wan](https://i.imgur.com/fJRm4Vk.jpeg)", text_type_text)
+        new_node = split_nodes_image([node])
+        self.assertListEqual(
+                [TextNode("This is text with a ", text_type_text),
+                TextNode("rick roll", text_type_image, "https://i.imgur.com/aKa0qIh.gif"),
+                TextNode(" and ", text_type_text),
+                TextNode("obi wan", text_type_image, "https://i.imgur.com/fJRm4Vk.jpeg")
+                ],
+                new_node
+            )
+
 
 
 

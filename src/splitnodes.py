@@ -27,10 +27,69 @@ def extract_markdown_images(text):
     return extracted
 
 
-
-
-
 def extract_markdown_links(text):
     extracted = re.findall(r"\[(.*?)\]\((.*?)\)", text)
     return extracted
 
+
+def split_nodes_link(old_nodes):
+    new_nodes = []
+    for node in old_nodes:
+        extracted = extract_markdown_links(node.text)
+        if extracted == []:
+            new_nodes.append(TextNode(node.text, node.text_type))
+            return new_nodes
+        else:
+            remaining_text = node.text
+            for i, link in enumerate(extracted):
+                parts = remaining_text.split(f"[{extracted[i][0]}]({extracted[i][1]})", 1)
+
+#                print(f"\n{i}, parts = {parts}")
+#                print(f"{i}, remaining text = {remaining_text}")
+#                print(f"extracted = {extracted}")
+
+                if parts[0] == "":
+                    new_nodes.append(TextNode(extracted[i][0], "link", extracted[i][1]))
+                else:
+                    new_nodes.append(TextNode(parts[0], "text"))
+                    new_nodes.append(TextNode(extracted[i][0], "link", extracted[i][1]))
+
+#                print(f"current_node = {new_nodes}")
+                if i == (len(extracted) - 1) and parts[1] != "":
+                    new_nodes.append(TextNode(parts[1], "text"))
+                else:
+                    remaining_text = parts[1]
+#    print(f"new_nodes = {new_nodes}")
+    return new_nodes
+
+
+
+def split_nodes_image(old_nodes):
+    new_nodes = []
+    for node in old_nodes:
+        extracted = extract_markdown_images(node.text)
+        if extracted == []:
+            new_nodes.append(TextNode(node.text, node.text_type))
+            return new_nodes
+        else:
+            remaining_text = node.text
+            for i, link in enumerate(extracted):
+                parts = remaining_text.split(f"![{extracted[i][0]}]({extracted[i][1]})", 1)
+
+#                print(f"\n{i}, parts = {parts}")
+#                print(f"{i}, remaining text = {remaining_text}")
+#                print(f"extracted = {extracted}")
+
+                if parts[0] == "":
+                    new_nodes.append(TextNode(extracted[i][0], "image", extracted[i][1]))
+                else:
+                    new_nodes.append(TextNode(parts[0], "text"))
+                    new_nodes.append(TextNode(extracted[i][0], "image", extracted[i][1]))
+
+#                print(f"current_node = {new_nodes}")
+                if i == (len(extracted) - 1) and parts[1] != "":
+                    new_nodes.append(TextNode(parts[1], "text"))
+                else:
+                    remaining_text = parts[1]
+#    print(f"new_nodes = {new_nodes}")
+    return new_nodes
