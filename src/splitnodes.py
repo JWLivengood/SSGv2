@@ -3,9 +3,14 @@ import re
 
 def split_nodes_delimiter(old_nodes, delimiter, text_type):
     new_nodes = []
+#    print(f"old_nodes = {old_nodes}")
     for node in old_nodes:
+        if not isinstance(node, TextNode):
+            raise ValueError(f"Expected TextNode, but got {type(node)} with value {node}")
+#        print(f"node = {node}")
         if node.text_type == "text" and delimiter in node.text:
             parts = node.text.split(delimiter)
+#            print(f"Split result at '{delimiter}': {parts}")
             if len(parts) % 2 == 0:
                 raise Exception(f"Invalid Markdown Syntax (No closing delimiter for {delimiter})")
             for i, part in enumerate(parts):
@@ -105,12 +110,26 @@ def split_nodes_image(old_nodes):
     return new_nodes
 
 def text_to_textnodes(text):
-    new_nodes = []
-    new_nodes1 = split_nodes_delimiter(text, "**", text_type_bold)
+    if isinstance(text, str):
+        new_nodes = [TextNode(text, "text")]
+    else:
+        new_nodes = text
+#    print(f"Initial TextNode: {new_nodes}") #Debug
+
+    new_nodes1 = split_nodes_delimiter(new_nodes, "**", text_type_bold)
+#    print(f"After splitting **: {new_nodes1}")
+
     new_nodes2 = split_nodes_delimiter(new_nodes1, "*", text_type_italic)
+#    print(f"After splitting *: {new_nodes2}")
+
     new_nodes3 = split_nodes_delimiter(new_nodes2, "'", text_type_code)
+#    print(f"After splitting ': {new_nodes3}")
+
     new_nodes4 = split_nodes_image(new_nodes3)
+#    print(f"After splitting image: {new_nodes4}")
+
     new_nodes5 = split_nodes_link(new_nodes4)
+#    print(f"After splitting link: {new_nodes5}")
 #    print(f"1: {new_nodes1}")
 #    print(f"2: {new_nodes2}")
 #    print(f"3: {new_nodes3}")

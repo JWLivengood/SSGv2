@@ -3,7 +3,8 @@ import unittest
 from htmlnode import HTMLNode
 from htmlnode import LeafNode
 from htmlnode import ParentNode
-from markdown_processor import markdown_to_blocks, block_to_block_type, markdown_to_html_node
+from markdown_processor import markdown_to_blocks, block_to_block_type, markdown_to_text_nodes, markdown_to_html
+from textnode import text_node_to_html_node
 
 class TestMarkdownProcessor(unittest.TestCase):
     def test_markdown_to_blocks(self):
@@ -86,24 +87,7 @@ this is fake'''
 
         > Now this is a big quote.
         > And this a lil quote'''
-        html_test = markdown_to_html_node(block_test)
-        expected = ParentNode('div', [HTMLNode('h3', "This is a heading."), 
-                    HTMLNode('p', 'This is a paragraph.'), 
-                    ParentNode('pre', 
-                               [HTMLNode('code', 'This is code.')]),
-                    ParentNode('ol', 
-                               [HTMLNode('li', '1. this'), 
-                                HTMLNode('li', '2. is'), 
-                                HTMLNode('li', '3. a'), 
-                                HTMLNode('li', '4. list')]
-                               ),
-                    ParentNode('ul',
-                               [HTMLNode('li', '* This'),
-                                HTMLNode('li', '* is'),
-                                HTMLNode('li', '* unordered'),
-                                HTMLNode('li', '- list')]),
-                    ParentNode('blockquote', 
-                               [HTMLNode('p', 'Now this is a big quote.'),
-                                HTMLNode('p', 'And this a lil quote')])
-                    ])
-        self.assertEqual(expected, html_test) 
+        result = markdown_to_html(block_test)
+        
+        expected = '<div><h3>This is a heading.</h3><p>This is a paragraph.</p><pre><code>This is code.</code></pre><ol><li>this</li><li>is</li><li>a</li><li>list</li></ol><ul><li>This</li><li>is</li><li>unordered</li><li>list</li></ul><blockquote>Now this is a big quote. And this a lil quote</blockquote></div>'
+        self.assertEqual(expected, result)

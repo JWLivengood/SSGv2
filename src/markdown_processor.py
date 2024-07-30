@@ -1,5 +1,7 @@
 from itertools import filterfalse
+from textnode import TextNode, text_node_to_html_node, text_type_text, text_type_bold, text_type_italic, text_type_code, text_type_link, text_type_image
 from htmlnode import HTMLNode, LeafNode, ParentNode
+from splitnodes import text_to_textnodes
 
 def markdown_to_blocks(markdown):
     blocks = []
@@ -59,82 +61,103 @@ def block_to_block_type(block):
         return "paragraph"
 
 
-def check_heading(heading):
-    x = heading.count('#', 0, 5)
-    if x == 1:
-        return 'h1'
-    elif x == 2:
-        return 'h2'
-    elif x == 3:
-        return 'h3'
-    elif x == 4:
-        return 'h4'
-    elif x == 5:
-        return 'h5'
-    elif x == 6:
-        return 'h6'
+def markdown_to_html(markdown):
+    return markdown_to_text_nodes(markdown).to_html()
+
+def markdown_to_text_nodes(markdown):
+    blocks = markdown_to_blocks(markdown)
+#    print(f"blocks = {blocks}")
+    children = []
+    for block in blocks:
+        html_node = block_to_html_node(block)
+#        print(f"html_node = {html_node}")
+        children.append(html_node)
+    return ParentNode("div", children, None)
+
+
+def block_to_html_node(block):
+    block_type = block_to_block_type(block)
+    if block_type == 'paragraph':
+        return paragraph_to_html_node(block)
+    if block_type == 'heading':
+        return heading_to_html_node(block)
+    if block_type == 'code':
+        return code_to_html_node(block)
+    if block_type == 'ordered_list':
+        return olist_to_html_node(block)
+    if block_type == 'unordered_list':
+        return ulist_to_html_node(block)
+    if block_type == 'quote':
+        return quote_to_html_node(block)
+    raise ValueError("Invalid block type")
+
 
 def text_to_children(text):
-    nested_nodes = []
-    sub_nodes = []
-    sub_nodes = text.split('\n')
-    for sub_node in sub_nodes:
-        block_type = block_to_block_type(text)
-        if block_type == 'ordered_list' or block_type == 'unordered_list':
-            nested_nodes.append(HTMLNode('li', sub_node))
-        elif block_type == 'code':
-            nested_nodes.append(HTMLNode('code', sub_node.strip('```')))
-        elif block_type == 'quote':
-            nested_nodes.append(HTMLNode('p', sub_node.strip('> ')))
-        elif block_type == 'paragraph':
-            nested_nodes.append(HTMLNode('p', sub_node))
-
-    return nested_nodes
+    text_nodes = text_to_textnodes(text)
+    children = []
+    for text_node in text_nodes:
+        html_node = text_node_to_html_node(text_node)
+        children.append(html_node)
+    return children
 
 
+def paragraph_to_html_node(block):
+    lines = block.split('\n')
+    paragraph = " ".join(lines)
+    children = text_to_children(paragraph)
+    return ParentNode('p', children)
 
-def markdown_to_html_node(markdown):
-    block_types = []
-    blocks = markdown_to_blocks(markdown)
-    
-    for block in blocks: #Create list of block types
-#        print(block)
-        block_types.append(block_to_block_type(block))
-#    print(blocks)
-#    print(block_types)
-    nodes = []
-    for i, block in enumerate(blocks):
-        #HEADING
-        if block_types[i] == 'heading':
-            heading = check_heading(block)
-            stripped_heading = block.strip("#* ")
-            nodes.append(HTMLNode(heading, stripped_heading))
-#            print(f"nodes = {nodes}")
+def heading_to_html_node(block):
+    level = 0
+    for char in block:
+        if char == '#':
+            level += 1
+        else:
+            break
+    if level +1 >= len(block):
+        raise ValueError(f"Invalid heading level: {level}")
+    text = block[level + 1 :]
+    children = text_to_children(text)
+    return ParentNode(f"h{level}", children)
 
-        #PARAGRAPH
-        elif block_types[i] == 'paragraph':
-            nodes.append(HTMLNode('p', block))
-        
-        #CODE
-        elif block_types[i] == 'code':
-            nodes.append(ParentNode('pre', text_to_children(block)))
 
-        #ORDERED_LIST
-        elif block_types[i] == 'ordered_list':
-            nodes.append(ParentNode('ol', text_to_children(block)))
-#            print(f"node = {sub_nodes}")
-#            print(f"sub = {block}")
+def code_to_html_node(block):
+    if not block.startswith("```") or not block.endswith("```"):
+        raise ValueError("Invalid code block")
+    text = block[3:-3]
+    children = text_to_children(text)
+    code = ParentNode("code", children)
+    return ParentNode("pre", [code])
 
-        #UNORDERED_LIST
-        elif block_types[i] == 'unordered_list':
-            nodes.append(ParentNode('ul', text_to_children(block)))
 
-        #QUOTE
-        elif block_types[i] == 'quote':
-            nodes.append(ParentNode('blockquote', text_to_children(block)))
+def olist_to_html_node(block):
+    items = block.split('\n')
+    html_items = []
+    for item in items:
+        text = item[3:]
+        children = text_to_children(text)
+        html_items.append(ParentNode("li", children))
+    return ParentNode("ol", html_items)
 
-    #WRAP IN DIV
-    completed = ParentNode('div', nodes)
+def ulist_to_html_node(block):
+    items = block.split('\n')
+    html_items = []
+    for item in items:
+        text = item[2:]
+        children = text_to_children(text)
+        html_items.append(ParentNode("li", children))
+    return ParentNode("ul", html_items)
 
-    return completed
-        
+
+def quote_to_html_node(block):
+    lines = block.split('\n')
+    new_lines = []
+    for line in lines:
+        if not line.startswith(">"):
+            raise ValueError("Invalid quote block")
+        new_lines.append(line.lstrip(">").strip())
+    content = " ".join(new_lines)
+    children = text_to_children(content)
+    return ParentNode("blockquote", children)
+
+
