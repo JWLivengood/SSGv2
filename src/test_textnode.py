@@ -7,6 +7,7 @@ from splitnodes import split_nodes_delimiter, extract_markdown_images, extract_m
 
 class TestTextNode(unittest.TestCase):
     def test_eq(self):
+        self.maxDiff = None
         node = TextNode("This is a text node", "bold")
         node2 = TextNode("This is a text node", "bold")
         self.assertEqual(node, node2)
@@ -215,7 +216,8 @@ class TestSplitNodes(unittest.TestCase):
             )
 
     def test_text_to_textnodes(self):
-        node = TextNode("This is **text** with an *italic* word and a 'code block' and an ![obi wan image](https://i.imgur.com/fJRm4Vk.jpeg) and a [link](https://boot.dev)", text_type_text)
+        self.maxDiff = None
+        node = TextNode("This is **text** with an *italic* word and a `code block` and an ![obi wan image](https://i.imgur.com/fJRm4Vk.jpeg) and a [link](https://boot.dev)", text_type_text)
         textnoded = text_to_textnodes([node])
         self.assertListEqual(
                 [

@@ -3,8 +3,9 @@ import unittest
 from htmlnode import HTMLNode
 from htmlnode import LeafNode
 from htmlnode import ParentNode
-from markdown_processor import markdown_to_blocks, block_to_block_type, markdown_to_text_nodes, markdown_to_html
+from markdown_processor import markdown_to_blocks, block_to_block_type, markdown_to_text_nodes, markdown_to_html, extract_title
 from textnode import text_node_to_html_node
+from setstatic import generate_page, generate_pages_recursive
 
 class TestMarkdownProcessor(unittest.TestCase):
     def test_markdown_to_blocks(self):
@@ -91,3 +92,67 @@ this is fake'''
         
         expected = '<div><h3>This is a heading.</h3><p>This is a paragraph.</p><pre><code>This is code.</code></pre><ol><li>this</li><li>is</li><li>a</li><li>list</li></ol><ul><li>This</li><li>is</li><li>unordered</li><li>list</li></ul><blockquote>Now this is a big quote. And this a lil quote</blockquote></div>'
         self.assertEqual(expected, result)
+        
+    def test_extract_title(self):
+        node = '''This is a line.
+
+            ## This is a heading.
+
+        #This is the title.
+
+        This is another paragraph.'''
+        title = extract_title(node)
+        expected = "This is the title."
+        self.assertEqual(expected, title)
+
+    def test_markdown_link(self):
+        markdown_link_test = "**I like Tolkien.** Read my [first post here](/majesty) (Sorry)"
+        html_test = markdown_to_html(markdown_link_test)
+#        print(f"HTML Test Output = {html_test}")
+
+
+    def test_generate_page(self):
+        generate_pages_recursive('/Users/jlivengood/workspace/github.com/jwlivengood/ssgv2/static/test_src/', '/Users/jlivengood/workspace/github.com/jwlivengood/ssgv2/template.html', '/Users/jlivengood/workspace/github.com/JWLivengood/SSGv2/static/test_dest/')
+
+
+    def test_markdown_conversion(self):
+        # Sample markdown content
+        markdown_content = """
+        # Tolkien Fan Club
+
+        **I like Tolkien**. Read my [first post here](/majesty) (sorry the link doesn't work yet)
+
+        > All that is gold does not glitter
+
+        ## Reasons I like Tolkien
+
+        * You can spend years studying the legendarium and still not understand its depths
+        * It can be enjoyed by children and adults alike
+        * Disney *didn't ruin it*
+        * It created an entirely new genre of fantasy
+
+        ## My favorite characters (in order)
+
+        1. Gandalf
+        2. Bilbo
+        3. Sam
+        4. Glorfindel
+        5. Galadriel
+        6. Elrond
+        7. Thorin
+        8. Sauron
+        9. Aragorn
+
+        Here's what `elflang` looks like (the perfect coding language):
+
+        ```
+        func main(){
+            fmt.Println("Hello, World!")
+        }
+        ```
+
+        """.strip()
+
+#        html_output = markdown_to_html(markdown_content)
+#        print(f"Output HTML: {html_output}")
+

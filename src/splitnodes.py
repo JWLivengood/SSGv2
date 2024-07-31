@@ -3,27 +3,22 @@ import re
 
 def split_nodes_delimiter(old_nodes, delimiter, text_type):
     new_nodes = []
-#    print(f"old_nodes = {old_nodes}")
-    for node in old_nodes:
-        if not isinstance(node, TextNode):
-            raise ValueError(f"Expected TextNode, but got {type(node)} with value {node}")
-#        print(f"node = {node}")
-        if node.text_type == "text" and delimiter in node.text:
-            parts = node.text.split(delimiter)
-#            print(f"Split result at '{delimiter}': {parts}")
-            if len(parts) % 2 == 0:
-                raise Exception(f"Invalid Markdown Syntax (No closing delimiter for {delimiter})")
-            for i, part in enumerate(parts):
-                if i % 2 == 0:
-                    #Even index, outside the delimiter
-                    new_nodes.append(TextNode(part, "text"))
-                    #Odd index, inside the delimiter
-                else:
-                    new_nodes.append(TextNode(part, text_type))
-                
-
-        else:
-            new_nodes.append(node)
+    for old_node in old_nodes:
+        if old_node.text_type != text_type_text:
+            new_nodes.append(old_node)
+            continue
+        split_nodes = []
+        sections = old_node.text.split(delimiter)
+        if len(sections) % 2 == 0:
+            raise ValueError("Invalid markdown, formatted section not closed")
+        for i in range(len(sections)):
+            if sections[i] == "":
+                continue
+            if i % 2 == 0:
+                split_nodes.append(TextNode(sections[i], text_type_text))
+            else:
+                split_nodes.append(TextNode(sections[i], text_type))
+        new_nodes.extend(split_nodes)
     return new_nodes
 
 
@@ -53,9 +48,9 @@ def split_nodes_link(old_nodes):
             for i, link in enumerate(extracted):
                 parts = remaining_text.split(f"[{extracted[i][0]}]({extracted[i][1]})", 1)
 
-#                print(f"\n{i}, parts = {parts}")
-#                print(f"{i}, remaining text = {remaining_text}")
-#                print(f"extracted = {extracted}")
+                #print(f"\n{i}, parts = {parts}")
+                #print(f"{i}, remaining text = {remaining_text}")
+                #print(f"extracted = {extracted}")
 
                 if parts[0] == "":
                     new_nodes.append(TextNode(extracted[i][0], "link", extracted[i][1]))
@@ -63,12 +58,12 @@ def split_nodes_link(old_nodes):
                     new_nodes.append(TextNode(parts[0], "text"))
                     new_nodes.append(TextNode(extracted[i][0], "link", extracted[i][1]))
 
-#                print(f"current_node = {new_nodes}")
+                #            print(f"current_node = {new_nodes}")
                 if i == (len(extracted) - 1) and parts[1] != "":
                     new_nodes.append(TextNode(parts[1], "text"))
                 else:
                     remaining_text = parts[1]
-#    print(f"new_nodes = {new_nodes}")
+    #print(f"new_nodes = {new_nodes}")
     return new_nodes
 
 
@@ -114,16 +109,15 @@ def text_to_textnodes(text):
         new_nodes = [TextNode(text, "text")]
     else:
         new_nodes = text
-#    print(f"Initial TextNode: {new_nodes}") #Debug
-
+    #print(f"Initial TextNode: {new_nodes}") #Debug
     new_nodes1 = split_nodes_delimiter(new_nodes, "**", text_type_bold)
-#    print(f"After splitting **: {new_nodes1}")
+    #print(f"After splitting **: {new_nodes1}")
 
     new_nodes2 = split_nodes_delimiter(new_nodes1, "*", text_type_italic)
-#    print(f"After splitting *: {new_nodes2}")
+    #print(f"After splitting *: {new_nodes2}")
 
-    new_nodes3 = split_nodes_delimiter(new_nodes2, "'", text_type_code)
-#    print(f"After splitting ': {new_nodes3}")
+    new_nodes3 = split_nodes_delimiter(new_nodes2, "`", text_type_code)
+    #    print(f"After splitting ': {new_nodes3}")
 
     new_nodes4 = split_nodes_image(new_nodes3)
 #    print(f"After splitting image: {new_nodes4}")

@@ -61,6 +61,16 @@ def block_to_block_type(block):
         return "paragraph"
 
 
+def extract_title(markdown):
+    blocks = markdown_to_blocks(markdown)
+#    print(f"blocks = {blocks}")
+    for block in blocks:
+        if block[0:5].count("#") != 1:
+            continue
+        else:
+            title = block[1:]
+    return title
+
 def markdown_to_html(markdown):
     return markdown_to_text_nodes(markdown).to_html()
 
@@ -71,7 +81,8 @@ def markdown_to_text_nodes(markdown):
     for block in blocks:
         html_node = block_to_html_node(block)
 #        print(f"html_node = {html_node}")
-        children.append(html_node)
+        if html_node:
+            children.append(html_node)
     return ParentNode("div", children, None)
 
 
@@ -102,9 +113,19 @@ def text_to_children(text):
 
 
 def paragraph_to_html_node(block):
+#    print(f"Original Block: {block}")
     lines = block.split('\n')
-    paragraph = " ".join(lines)
-    children = text_to_children(paragraph)
+    children = []
+
+    for line in lines:
+        children.extend(text_to_children(line))
+        children.append(LeafNode('br', ""))
+
+    if children and isinstance(children[-1], LeafNode) and children[-1].tag == 'br':
+        children.pop()
+
+    if not children:
+        return LeafNode('p', block)
     return ParentNode('p', children)
 
 def heading_to_html_node(block):
@@ -159,5 +180,4 @@ def quote_to_html_node(block):
     content = " ".join(new_lines)
     children = text_to_children(content)
     return ParentNode("blockquote", children)
-
 
